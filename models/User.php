@@ -2,86 +2,110 @@
 
 namespace app\models;
 
-class User extends \yii\base\Object implements \yii\web\IdentityInterface
-{
-    public $id;
-    public $username;
-    public $password;
-    public $authKey;
-    public $accessToken;
+use Yii;
 
-    private static $users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            'password' => 'admin',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            'password' => 'demo',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
+/**
+ * This is the model class for collection "user".
+ *
+ * @property \MongoId|string $_id
+ * @property mixed $username
+ * @property mixed $password
+ * @property mixed $authKey
+ * @property mixed $accessToken
+ * @property mixed $createTime
+ * @property mixed $updateTime
+ */
+class User extends \yii\mongodb\ActiveRecord implements \yii\web\IdentityInterface
+{
+    /**
+     * @inheritdoc
+     */
+    public static function collectionName()
+    {
+        return ['yii2demo', 'user'];
+    }
 
     /**
      * @inheritdoc
      */
+    public function attributes()
+    {
+        return [
+            '_id',
+            'username',
+            'password',
+            'authKey',
+            'accessToken',
+            'createTime',
+            'updateTime',
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function rules()
+    {
+        return [
+            [['username', 'password', 'authKey', 'accessToken', 'createTime', 'updateTime'], 'safe']
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function attributeLabels()
+    {
+        return [
+            '_id' => Yii::t('app', 'ID'),
+            'username' => Yii::t('app', 'Username'),
+            'password' => Yii::t('app', 'Password'),
+            'authKey' => Yii::t('app', 'Auth Key'),
+            'accessToken' => Yii::t('app', 'Access Token'),
+            'createTime' => Yii::t('app', 'Create Time'),
+            'updateTime' => Yii::t('app', 'Update Time'),
+        ];
+    }
+    
     public static function findIdentity($id)
     {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+        echo $id;
+        return static::findOne(['_id' => $id]);
     }
-
-    /**
-     * @inheritdoc
-     */
-    public static function findIdentityByAccessToken($token, $type = null)
-    {
-        foreach (self::$users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Finds user by username
-     *
-     * @param  string      $username
-     * @return static|null
-     */
+    
     public static function findByUsername($username)
     {
-        foreach (self::$users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        
+        return static::findOne(['username' => $username]);
     }
-
-    /**
-     * @inheritdoc
-     */
-    public function getId()
+    
+    public static function findIdentityByAccessToken($token, $type = null)
     {
-        return $this->id;
+        return static::findOne(['accessToken' => $token]);
     }
-
-    /**
-     * @inheritdoc
-     */
+    
+    public function validatePassword($password, $password_hash)
+    {
+        /*file_put_contents('/home/worker/data/www/yii2-demo/runtime/logs/log.log', $this->password. ' '.$password. ' ' . $password_hash . PHP_EOL, FILE_APPEND);
+        //return Yii::$app->security->validatePassword($password, $password_hash);
+        $password = Yii::$app->getSecurity()->generatePasswordHash($password);
+        file_put_contents('/home/worker/data/www/yii2-demo/runtime/logs/log.log', $this->password. ' '.$password. ' ' . $password_hash . PHP_EOL, FILE_APPEND);
+        return $this->password === $password;
+        */
+        if (Yii::$app->getSecurity()->validatePassword($password, $this->password)) {
+            // all good, logging user in
+            return true;
+        } else {
+            // wrong password
+            return false;
+        }
+    }
+    
     public function getAuthKey()
     {
         return $this->authKey;
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -89,15 +113,14 @@ class User extends \yii\base\Object implements \yii\web\IdentityInterface
     {
         return $this->authKey === $authKey;
     }
-
-    /**
-     * Validates password
-     *
-     * @param  string  $password password to validate
-     * @return boolean if password provided is valid for current user
-     */
-    public function validatePassword($password)
+    
+    public function getId()
     {
-        return $this->password === $password;
+        return strval($this->_id);
+    }
+    
+    public function getUsername()
+    {
+        return strval($this->username);
     }
 }

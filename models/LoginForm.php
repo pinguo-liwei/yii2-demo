@@ -43,8 +43,8 @@ class LoginForm extends Model
     {
         if (!$this->hasErrors()) {
             $user = $this->getUser();
-
-            if (!$user || !$user->validatePassword($this->password)) {
+            //file_put_contents('/home/worker/data/www/yii2-demo/runtime/logs/log.log', "user:" . var_export($user, true), FILE_APPEND);
+            if (!$user || !$user->validatePassword($this->password, $user->password)) {
                 $this->addError($attribute, 'Incorrect username or password.');
             }
         }

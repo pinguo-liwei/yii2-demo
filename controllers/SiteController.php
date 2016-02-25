@@ -59,6 +59,7 @@ class SiteController extends Controller
         }
 
         $model = new LoginForm();
+        //file_put_contents('/home/worker/data/www/yii2-demo/runtime/logs/log.log', var_export(Yii::$app->request->post(), true), FILE_APPEND);
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
             return $this->goBack();
         }
